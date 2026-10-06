@@ -1,0 +1,12 @@
+[package]
+name = "pixtacio-desktop"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+pixtacio-core = { path = "../pixtacio-core" }
+tokio = { version = "1.0", features = ["full"] }
+gpui-kit = "0.7.1"
+anyhow = "1.0"
+kamadak-exif = "0.6"
+image = "0.25"

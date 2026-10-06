@@ -1,0 +1,10 @@
+[package]
+name = "pixtacio-core"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { version = "1", features = ["fs"] }
+image = "0.25.10"
+video = "0.1.1"
+kamadak-exif = "0.6"
