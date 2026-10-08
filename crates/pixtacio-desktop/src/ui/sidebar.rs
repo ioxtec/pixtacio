@@ -1,28 +1,46 @@
-use gpui_kit::component::*;
+use gpui_kit::component::IconName;
+use gpui_kit::component::sidebar::{
+    Sidebar, SidebarFooter, SidebarGroup, SidebarHeader, SidebarMenu, SidebarMenuItem,
+    SidebarToggleButton,
+};
 use gpui_kit::*;
 
-const SIDEBAR_WIDTH: f32 = 200.0;
-
-pub struct Sidebar {
+pub struct AppSidebar {
     files: Vec<String>,
-    selected_index: Option<usize>,
 }
 
-impl Sidebar {
+impl AppSidebar {
     pub fn new() -> Self {
-        Sidebar {
-            files: Vec::new(),
-            selected_index: None,
+        AppSidebar {
+            files: vec!["cat.jpg".into(), "dog.png".into(), "mountains.jpg".into()],
         }
+    }
+
+    pub fn update_files(&mut self, file_list: Vec<String>, cx: &mut Context<Self>) {
+        self.files = file_list;
+        cx.notify();
     }
 }
 
-impl Render for Sidebar {
-    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        v_flex()
-            .h_full()
-            .w(px(SIDEBAR_WIDTH))
-            .bg(rgb(0xdddddd))
-            .children(self.files.iter().map(|file| div().child(file.clone())))
+impl Render for AppSidebar {
+    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+        Sidebar::new("app-sidebar")
+            .header(SidebarHeader::new().child("My Application"))
+            .child(
+                SidebarGroup::new("Navigation").child(
+                    SidebarMenu::new()
+                        .child(
+                            SidebarMenuItem::new("Dashboard")
+                                .icon(IconName::LayoutDashboard)
+                                .on_click(|_, _, _| println!("Dashboard clicked")),
+                        )
+                        .child(
+                            SidebarMenuItem::new("Settings")
+                                .icon(IconName::Settings)
+                                .on_click(|_, _, _| println!("Settings clicked")),
+                        ),
+                ),
+            )
+            .footer(SidebarFooter::new().child("User Profile"))
     }
 }

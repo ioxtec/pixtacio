@@ -5,8 +5,8 @@ use crate::ui::{
     image_view::ImageView,
     navigation::Screen,
     settings_view::SettingsView,
-    sidebar::Sidebar,
-    toolbar::{Toolbar, ToolbarEvent},
+    sidebar::AppSidebar,
+    toolbar::{AppToolbar, AppToolbarEvent},
     video_view::VideoView,
 };
 
@@ -16,8 +16,8 @@ pub struct PixtacioApp {
     image_view: Entity<ImageView>,
     video_view: Entity<VideoView>,
     settings_view: Entity<SettingsView>,
-    toolbar: Entity<Toolbar>,
-    sidebar: Entity<Sidebar>,
+    toolbar: Entity<AppToolbar>,
+    sidebar: Entity<AppSidebar>,
     // Dropping a subscription stops its event handler.
     _subscriptions: Vec<Subscription>,
 }
@@ -48,14 +48,14 @@ impl PixtacioApp {
     /// Creates the views once; rendering does not recreate them.
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
         let screen = Screen::Image;
-        let toolbar = cx.new(|_| Toolbar::new(screen));
-        let sidebar = cx.new(|_| Sidebar::new());
+        let toolbar = cx.new(|_| AppToolbar::new(screen));
+        let sidebar = cx.new(|_| AppSidebar::new());
         let image_view = cx.new(|_| ImageView::new());
         let video_view = cx.new(|_| VideoView::new());
         let settings_view = cx.new(|cx| SettingsView::new(window, cx));
         // The toolbar requests navigation; the app decides how to handle it.
         let navigation = cx.subscribe(&toolbar, |this, _, event, cx| {
-            let ToolbarEvent::Navigate(screen) = event;
+            let AppToolbarEvent::Navigate(screen) = event;
             this.navigate(*screen, cx);
         });
         Self {
@@ -91,10 +91,17 @@ impl PixtacioApp {
             Screen::Settings => self.settings_view.clone().into_any_element(),
         }
     }
+
+    fn update_sidebar(&self, cx: &mut Context<Self>) {
+        self.sidebar.update(cx, |sidebar, cx| {
+            let files = vec!["cat.jpg".into(), "dog.png".into(), "mountains.jpg".into()];
+            sidebar.update_files(files, cx);
+        });
+    }
 }
 
 impl Render for PixtacioApp {
-    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
         // The toolbar and sidebar stay in place while the content changes.
         v_flex()
             .size_full()
