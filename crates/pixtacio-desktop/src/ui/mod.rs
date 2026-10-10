@@ -1,6 +1,5 @@
-pub mod image_view;
 pub mod navigation;
-pub mod settings_view;
 pub mod sidebar;
+pub mod thumbnail_strip;
 pub mod toolbar;
-pub mod video_view;
+pub mod views;

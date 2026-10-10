@@ -1,14 +1,14 @@
+use crate::dialogs::file_dialogs;
+use crate::image::image_controller::ImageController;
+use crate::ui::{
+    navigation::Screen,
+    sidebar::AppSidebar,
+    toolbar::{AppToolbar, MenuItemEvent, OpenViewEvent},
+};
+
+use crate::ui::views::{image_view::ImageView, settings_view::SettingsView, video_view::VideoView};
 use gpui_kit::component::{Root, h_flex, v_flex};
 use gpui_kit::*;
-
-use crate::ui::{
-    image_view::ImageView,
-    navigation::Screen,
-    settings_view::SettingsView,
-    sidebar::AppSidebar,
-    toolbar::{AppToolbar, AppToolbarEvent},
-    video_view::VideoView,
-};
 
 /// Coordinates navigation and composes the main window's UI.
 pub struct PixtacioApp {
@@ -17,6 +17,7 @@ pub struct PixtacioApp {
     video_view: Entity<VideoView>,
     settings_view: Entity<SettingsView>,
     toolbar: Entity<AppToolbar>,
+    image_controller: Entity<ImageController>,
     sidebar: Entity<AppSidebar>,
     // Dropping a subscription stops its event handler.
     _subscriptions: Vec<Subscription>,
@@ -50,27 +51,68 @@ impl PixtacioApp {
         let screen = Screen::Image;
         let toolbar = cx.new(|_| AppToolbar::new(screen));
         let sidebar = cx.new(|_| AppSidebar::new());
-        let image_view = cx.new(|_| ImageView::new());
+        let image_controller = cx.new(|_| ImageController::new());
+        let image_view = cx.new(|cx| ImageView::new(image_controller.clone(), cx));
         let video_view = cx.new(|_| VideoView::new());
         let settings_view = cx.new(|cx| SettingsView::new(window, cx));
         // The toolbar requests navigation; the app decides how to handle it.
-        let navigation = cx.subscribe(&toolbar, |this, _, event, cx| {
-            let AppToolbarEvent::Navigate(screen) = event;
-            this.navigate(*screen, cx);
-        });
+        let menu_event_sub = cx.subscribe(&toolbar, Self::open_menu_event_handler);
+        let view_event_sub = cx.subscribe(&toolbar, Self::open_view_event_handler);
+
         Self {
             screen,
             image_view,
             video_view,
             settings_view,
             toolbar,
+            image_controller,
             sidebar,
-            _subscriptions: vec![navigation],
+            _subscriptions: vec![menu_event_sub, view_event_sub],
         }
     }
 
-    /// All screen changes go through here; add leave/enter behavior when needed.
-    pub fn navigate(&mut self, screen: Screen, cx: &mut Context<Self>) {
+    fn open_menu_event_handler(
+        &mut self,
+        _source: Entity<AppToolbar>,
+        event: &MenuItemEvent,
+        cx: &mut Context<Self>,
+    ) {
+        match event {
+            MenuItemEvent::OpenFile => {
+                println!("Open file");
+            }
+            MenuItemEvent::OpenFolder => {
+                println!("Open folder");
+                cx.spawn(async move |this, cx| {
+                    let Some(folder) = file_dialogs::pick_folder().await else {
+                        return;
+                    };
+
+                    let _ = this.update(cx, |app, cx| {
+                        // Show folder information even when another view was active.
+                        app.screen = Screen::Image;
+                        app.toolbar.update(cx, |toolbar, cx| {
+                            toolbar.set_screen(Screen::Image, cx);
+                        });
+                        app.image_controller.update(cx, |controller, cx| {
+                            controller.open_folder(folder, cx);
+                        });
+                        cx.notify();
+                    });
+                })
+                .detach();
+            }
+        }
+    }
+
+    fn open_view_event_handler(
+        &mut self,
+        _source: Entity<AppToolbar>,
+        event: &OpenViewEvent,
+        cx: &mut Context<Self>,
+    ) {
+        let OpenViewEvent::Navigate(screen) = event;
+        let screen = *screen;
         if self.screen == screen {
             return;
         }
@@ -90,13 +132,6 @@ impl PixtacioApp {
             Screen::Video => self.video_view.clone().into_any_element(),
             Screen::Settings => self.settings_view.clone().into_any_element(),
         }
-    }
-
-    fn update_sidebar(&self, cx: &mut Context<Self>) {
-        self.sidebar.update(cx, |sidebar, cx| {
-            let files = vec!["cat.jpg".into(), "dog.png".into(), "mountains.jpg".into()];
-            sidebar.update_files(files, cx);
-        });
     }
 }
 

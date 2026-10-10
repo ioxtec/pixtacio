@@ -1,24 +1,15 @@
 use gpui_kit::component::IconName;
 use gpui_kit::component::sidebar::{
     Sidebar, SidebarFooter, SidebarGroup, SidebarHeader, SidebarMenu, SidebarMenuItem,
-    SidebarToggleButton,
 };
 use gpui_kit::*;
 
-pub struct AppSidebar {
-    files: Vec<String>,
-}
+/// Application navigation; image previews belong to ThumbnailStrip.
+pub struct AppSidebar;
 
 impl AppSidebar {
     pub fn new() -> Self {
-        AppSidebar {
-            files: vec!["cat.jpg".into(), "dog.png".into(), "mountains.jpg".into()],
-        }
-    }
-
-    pub fn update_files(&mut self, file_list: Vec<String>, cx: &mut Context<Self>) {
-        self.files = file_list;
-        cx.notify();
+        Self
     }
 }
 

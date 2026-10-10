@@ -43,15 +43,15 @@ impl SettingsView {
         }
     }
 
-    pub fn input(&self) -> Entity<InputState> {
+    pub fn _input(&self) -> Entity<InputState> {
         self.name.clone()
     }
 
-    pub fn preview(&self) -> &SharedString {
+    pub fn _preview(&self) -> &SharedString {
         &self.preview
     }
 
-    pub fn changes(&self) -> usize {
+    pub fn _changes(&self) -> usize {
         self.changes
     }
 }

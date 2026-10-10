@@ -1,4 +1,6 @@
 mod app;
+mod dialogs;
+mod image;
 mod ui;
 
 #[tokio::main]
